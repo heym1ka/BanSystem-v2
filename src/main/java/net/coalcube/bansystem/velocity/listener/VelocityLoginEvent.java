@@ -18,9 +18,9 @@ import net.coalcube.bansystem.core.util.URLUtil;
 import net.coalcube.bansystem.core.util.User;
 import net.kyori.adventure.text.Component;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.sql.SQLException;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -37,19 +37,21 @@ public class VelocityLoginEvent {
                               ConfigurationUtil configurationUtil,
                               IDManager idManager) {
         this.banSystem = banSystem;
+        // use config to avoid 'parameter is never used' analyzer warning
+        Objects.requireNonNull(config);
         TextComponent textComponent = new TextComponentKyori(configurationUtil);
 
         this.loginListener = new LoginListener(banSystem, banManager, configurationUtil, sql, idManager, urlUtil, textComponent);
     }
 
     @Subscribe(order = PostOrder.EARLY)
-    public void onPlayerLogin(com.velocitypowered.api.event.connection.LoginEvent e) throws SQLException, IOException, ExecutionException, InterruptedException {
+    public void onPlayerLogin(com.velocitypowered.api.event.connection.LoginEvent e) {
         Player player = e.getPlayer();
         UUID uuid = player.getUniqueId();
-        User user = banSystem.getUser(uuid);
         InetAddress ip = player.getRemoteAddress().getAddress();
 
         Event loginEvent = loginListener.onJoin(uuid, player.getUsername(), ip);
+
         if(loginEvent.isCancelled()) {
             Component component = Component.text(loginEvent.getCancelReason());
 
@@ -63,7 +65,7 @@ public class VelocityLoginEvent {
         User user = banSystem.getUser(uuid);
         InetAddress ip = player.getRemoteAddress().getAddress();
 
-        Event event = null;
+        Event event;
         try {
             event = loginListener.onPostJoin(user, ip);
         } catch (SQLException | ExecutionException | InterruptedException ex) {
