@@ -114,6 +114,8 @@ public class CMDhistory implements Command {
                         for (History history : sortedHistory) {
                             String row = "";
 
+                            String resolvedCreator = resolveCreatorName(history.getCreator());
+
                             if (history.getHistoryType().equals(HistoryType.BAN)) {
                                 String id = "Not Found";
                                 String duration = timeFormatUtil.getFormattedRemainingTime(history.getDuration());
@@ -133,7 +135,7 @@ public class CMDhistory implements Command {
                                         .replaceAll("%reason%", history.getReason())
                                         .replaceAll("%creationdate%", simpleDateFormat.format(history.getCreateDate()))
                                         .replaceAll("%enddate%", endDate)
-                                        .replaceAll("%creator%", history.getCreator())
+                                        .replaceAll("%creator%", resolvedCreator)
                                         .replaceAll("%ip%", (history.getIp() == null ? "§cNot available" : history.getIp().getHostAddress()))
                                         .replaceAll("%type%", history.getType().toString())
                                         .replaceAll("%duration%", duration)
@@ -143,39 +145,39 @@ public class CMDhistory implements Command {
                                 row = configurationUtil.getMessage("History.clearedHistory")
                                         .replaceAll("%reason%", history.getReason())
                                         .replaceAll("%creationdate%", simpleDateFormat.format(history.getCreateDate()))
-                                        .replaceAll("%creator%", history.getCreator());
+                                        .replaceAll("%creator%", resolvedCreator);
                             } else if (history.getHistoryType().equals(HistoryType.KICK)) {
                                 row = configurationUtil.getMessage("History.kick")
                                         .replaceAll("%creationdate%", simpleDateFormat.format(history.getCreateDate()))
-                                        .replaceAll("%creator%", history.getCreator());
+                                        .replaceAll("%creator%", resolvedCreator);
                             } else if (history.getHistoryType().equals(HistoryType.KICKWITHREASON)) {
                                 row = configurationUtil.getMessage("History.kickWithReason")
                                         .replaceAll("%creationdate%", simpleDateFormat.format(history.getCreateDate()))
-                                        .replaceAll("%creator%", history.getCreator())
+                                        .replaceAll("%creator%", resolvedCreator)
                                         .replaceAll("%reason%", history.getReason());
                             } else if (history.getHistoryType().equals(HistoryType.UNMUTE)) {
                                 row = configurationUtil.getMessage("History.unmute")
                                         .replaceAll("%creationdate%", simpleDateFormat.format(history.getCreateDate()))
-                                        .replaceAll("%creator%", history.getCreator())
+                                        .replaceAll("%creator%", resolvedCreator)
                                         .replaceAll("%ID%", history.getId())
                                         .replaceAll("%id%", history.getId());
                             } else if (history.getHistoryType().equals(HistoryType.UNMUTEWITHREASON)) {
                                 row = configurationUtil.getMessage("History.unmuteWithReason")
                                         .replaceAll("%creationdate%", simpleDateFormat.format(history.getCreateDate()))
-                                        .replaceAll("%creator%", history.getCreator())
+                                        .replaceAll("%creator%", resolvedCreator)
                                         .replaceAll("%reason%", history.getReason())
                                         .replaceAll("%ID%", history.getId())
                                         .replaceAll("%id%", history.getId());
                             } else if (history.getHistoryType().equals(HistoryType.UNBAN)) {
                                 row = configurationUtil.getMessage("History.unban")
                                         .replaceAll("%creationdate%", simpleDateFormat.format(history.getCreateDate()))
-                                        .replaceAll("%creator%", history.getCreator())
+                                        .replaceAll("%creator%", resolvedCreator)
                                         .replaceAll("%ID%", history.getId())
                                         .replaceAll("%id%", history.getId());
                             } else if (history.getHistoryType().equals(HistoryType.UNBANWITHREASON)) {
                                 row = configurationUtil.getMessage("History.unbanWithReason")
                                         .replaceAll("%creationdate%", simpleDateFormat.format(history.getCreateDate()))
-                                        .replaceAll("%creator%", history.getCreator())
+                                        .replaceAll("%creator%", resolvedCreator)
                                         .replaceAll("%reason%", history.getReason())
                                         .replaceAll("%ID%", history.getId())
                                         .replaceAll("%id%", history.getId());
@@ -201,6 +203,26 @@ public class CMDhistory implements Command {
         } else {
                 user.sendMessage(configurationUtil.getMessage("NoPermissionMessage"));
             }
+    }
+
+    private String resolveCreatorName(String creator) {
+        if (creator == null || creator.isEmpty()) return "";
+        try {
+            UUID id = UUID.fromString(creator);
+            try {
+                String name = UUIDFetcher.getName(id);
+                if (name != null && !name.isEmpty()) return name;
+            } catch (Exception ignored) {}
+            try {
+                if (banmanager.isSavedBedrockPlayer(id)) {
+                    String bedName = banmanager.getSavedBedrockUsername(id);
+                    if (bedName != null && !bedName.isEmpty()) return bedName;
+                }
+            } catch (Exception ignored) {}
+            return id.toString();
+        } catch (IllegalArgumentException ex) {
+            return creator;
+        }
     }
 
     /*

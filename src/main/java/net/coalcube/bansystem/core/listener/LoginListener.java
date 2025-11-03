@@ -91,11 +91,12 @@ public class LoginListener {
                     SimpleDateFormat simpleDateFormat = new SimpleDateFormat(configurationUtil.getMessage("DateTimePattern"));
                     String enddate = simpleDateFormat.format(new Date(ban.getEnd()));
                     try {
+                        String creatorName = resolveCreatorName(ban.getCreator());
                         e.setCancelReason(banScreen
                                 .replaceAll("%reason%", ban.getReason())
                                 .replaceAll("%reamingtime%", BanSystem.getInstance().getTimeFormatUtil()
                                         .getFormattedRemainingTime(ban.getRemainingTime()))
-                                .replaceAll("%creator%", ban.getCreator())
+                                .replaceAll("%creator%", creatorName)
                                 .replaceAll("%enddate%", enddate)
                                 .replaceAll("&", "§")
                                 .replaceAll("%lvl%", String.valueOf(banManager.getLevel(uuid, ban.getReason())))
@@ -350,5 +351,31 @@ public class LoginListener {
             throwables.printStackTrace();
         }
         return event;
+    }
+
+    private String resolveCreatorName(String creator) {
+        if (creator == null || creator.isEmpty()) return "";
+        // if it's already a name (not a UUID), return it
+        try {
+            UUID id = UUID.fromString(creator);
+            // try to get name from UUIDFetcher
+            try {
+                String name = UUIDFetcher.getName(id);
+                if (name != null && !name.isEmpty()) return name;
+            } catch (Exception ignored) {}
+            // fallback: try bedrock saved username
+            try {
+                if (banManager.isSavedBedrockPlayer(id)) {
+                    String bedName = banManager.getSavedBedrockUsername(id);
+                    if (bedName != null && !bedName.isEmpty()) return bedName;
+                }
+            } catch (Exception ignored) {}
+
+            // final fallback: return shortened uuid or original
+            return id.toString();
+        } catch (IllegalArgumentException ex) {
+            // not a UUID -> likely already a name
+            return creator;
+        }
     }
 }
