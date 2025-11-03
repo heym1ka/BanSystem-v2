@@ -20,7 +20,7 @@ public class ConfigurationUtil {
     private File configFile;
     private File messagesFile;
     private File blacklistFile;
-    private BanSystem banSystem;
+    private final BanSystem banSystem;
 
     public ConfigurationUtil(YamlDocument config, YamlDocument messages, YamlDocument blacklist, BanSystem banSystem) {
         this.config = config;
@@ -85,26 +85,38 @@ public class ConfigurationUtil {
     }
 
     public String getMessage(String path) {
-        String msg = "";
+        String msg = null;
 
-        if(messages.get(path) instanceof List) {
-            int count = 0;
-            for(String line : messages.getStringList(path)) {
-                if(messages.getStringList(path).size()-1 == count) {
-                    msg = msg + line;
-                } else {
-                    msg = msg + line + "\n";
-                }
-                count ++;
+        if (messages == null) {
+            return "";
+        }
+
+        Object node = messages.get(path);
+        if(node instanceof List) {
+            StringBuilder sb = new StringBuilder();
+            List<String> lines = messages.getStringList(path);
+            for (int i = 0; i < lines.size(); i++) {
+                sb.append(lines.get(i));
+                if (i < lines.size() - 1) sb.append("\n");
             }
-        } else
+            msg = sb.toString();
+        } else {
             msg = messages.getString(path);
+        }
+
+        if (msg == null) {
+            // fallback to empty string to avoid NPEs; callers may expect empty when missing
+            return "";
+        }
 
         if(msg.contains("&"))
             msg = msg.replaceAll("&", "§");
 
+        String prefix = messages.getString("prefix");
+        if (prefix == null) prefix = "";
+
         if(msg.contains("%P%"))
-            msg = msg.replaceAll("%P%", messages.getString("prefix").replaceAll("&", "§"));
+            msg = msg.replaceAll("%P%", prefix.replaceAll("&", "§"));
 
         return msg;
     }
