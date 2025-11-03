@@ -86,3 +86,7 @@ Bei dem API-Key musst du nicht zwingend etwas eintragen, jedoch kann man sich be
 | Ban bypass | `bansys.ban.bypass` |
 | Chatfilter bypass | `bansys.bypasschatfilter` |
 | Chatdelay bypass | `bansys.bypasschatdelay` |
+
+## Ersteller
+Orginale Repo des Plugins: https://github.com/antisocialtobi/BanSystem-v2
+Orginaler Autor des Plugins: https://github.com/antisocialtobi/
