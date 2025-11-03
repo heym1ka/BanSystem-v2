@@ -60,6 +60,17 @@ public class LoginListener {
         String ip = inetAddress.getHostAddress();
         Ban ban = null;
 
+        // Ensure database is connected to avoid NPEs after plugin reload
+        try {
+            if (sql != null && !sql.isConnected()) {
+                sql.connect();
+            }
+        } catch (SQLException ex) {
+            bansystem.sendConsoleMessage(configurationUtil.getMessage("prefix") + "§cDatenbankverbindung fehlgeschlagen: " + ex.getMessage());
+            // We can't reliably check DB; return without cancelling login
+            return e;
+        }
+
         try {
             if (!banManager.isSavedBedrockPlayer(uuid) && UUIDFetcher.getName(uuid) == null) {
                 if (org.geysermc.floodgate.api.FloodgateApi.getInstance().getPlayer(uuid) != null) {
@@ -68,7 +79,8 @@ public class LoginListener {
             }
             ban = banManager.getBan(uuid, Type.NETWORK);
         } catch (SQLException | ExecutionException | InterruptedException ex) {
-            ex.printStackTrace();
+            bansystem.sendConsoleMessage(configurationUtil.getMessage("prefix") + "§cFehler beim DB-Zugriff: " + ex.getMessage());
+            return e;
         }
 
         if (ban != null) {
@@ -89,10 +101,9 @@ public class LoginListener {
                                 .replaceAll("%lvl%", String.valueOf(banManager.getLevel(uuid, ban.getReason())))
                                 .replaceAll("%id%", ban.getId()));
                     } catch (UnknownHostException unknownHostException) {
-                        unknownHostException.printStackTrace();
+                        bansystem.sendConsoleMessage(configurationUtil.getMessage("prefix") + "§cUnknownHostException: " + unknownHostException.getMessage());
                     }
                     e.setCancelled(true);
-                    // user.disconnect(component);
                     if (!banManager.isSetIP(uuid)) {
                         banManager.setIP(uuid, inetAddress);
                     }
@@ -115,7 +126,7 @@ public class LoginListener {
                     }
                 }
             } catch (SQLException | InterruptedException | ExecutionException throwables) {
-                throwables.printStackTrace();
+                bansystem.sendConsoleMessage(configurationUtil.getMessage("prefix") + "§cDB Fehler: " + throwables.getMessage());
             }
         }
         return e;
