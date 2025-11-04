@@ -1,5 +1,4 @@
 # BanSystem
-Ein umfangreiches Bestrafungssystem für Minecraft Server. Umfasst viele Funktionen und ist einfach zu bedienen.
 
 ## Anforderungen
 - **mindestens Java 9**
